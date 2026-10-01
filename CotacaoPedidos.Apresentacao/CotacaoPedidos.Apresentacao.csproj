@@ -31,10 +31,12 @@
 	<!--
 		Arquivos de configuração locais (NÃO vão para o Git - veja .gitignore). Se não existirem, o projeto
 		ainda compila; o programa avisa o que falta ao abrir. Modelos: *.example.json.
+		Vão para a pasta de saída do build e também para a do "dotnet publish" (CopyToPublishDirectory).
+		Por isso a pasta publicada contém segredos: não a compartilhe nem a coloque dentro do repositório.
 	-->
 	<ItemGroup>
-		<None Include="credentials.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('credentials.json')" />
-		<None Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('appsettings.json')" />
+		<None Include="credentials.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('credentials.json')" />
+		<None Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('appsettings.json')" />
 	</ItemGroup>
 
 </Project>

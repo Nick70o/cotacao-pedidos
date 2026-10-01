@@ -64,6 +64,39 @@ dotnet run --project CotacaoPedidos.Apresentacao
 
 > ⚠️ O **Importar escreve no banco do ERP**. Teste primeiro em um banco de homologação.
 
+### 4. Criar o executável e o atalho na área de trabalho
+
+Para abrir o programa com duplo clique, sem o Visual Studio nem o `dotnet run`:
+
+**a) Publique** (gera o `.exe` e as DLLs numa pasta fixa do seu usuário). Rode na pasta do repositório, **depois** de ter criado o `credentials.json` e o `appsettings.json` (passos 1 e 2):
+
+```powershell
+dotnet publish CotacaoPedidos.Apresentacao -c Release -o "$env:LOCALAPPDATA\CotacaoPedidos"
+```
+
+O `credentials.json` e o `appsettings.json` são copiados junto para a pasta publicada. Se você ainda não os tinha criado, copie-os para lá depois, ao lado do `CotacaoPedidos.Apresentacao.exe`.
+
+**b) Crie o atalho** na área de trabalho:
+
+```powershell
+$exe = "$env:LOCALAPPDATA\CotacaoPedidos\CotacaoPedidos.Apresentacao.exe"
+$destino = Join-Path ([Environment]::GetFolderPath('Desktop')) "Cotação de Pedidos.lnk"
+$atalho = (New-Object -ComObject WScript.Shell).CreateShortcut($destino)
+$atalho.TargetPath = $exe
+$atalho.WorkingDirectory = Split-Path $exe
+$atalho.Save()
+```
+
+Ou pelo Explorer: abra a pasta `%LOCALAPPDATA%\CotacaoPedidos`, clique com o botão direito em `CotacaoPedidos.Apresentacao.exe` e escolha **Enviar para → Área de trabalho (criar atalho)**.
+
+**c) Primeira execução:** o navegador abre uma vez para você autorizar o acesso ao Google; o login fica salvo em `token_store/`, ao lado do `.exe`.
+
+**Atualizar para uma versão nova:** rode o `dotnet publish` do passo (a) de novo, na mesma pasta. Ele troca só o programa; a configuração e o login continuam.
+
+> ⚠️ A pasta publicada contém **segredos** (`credentials.json`, `appsettings.json` e `token_store/`). Não a compartilhe, não a envie ao GitHub e não publique dentro da pasta do repositório.
+
+> ℹ️ O programa publicado precisa do **.NET 10 Desktop Runtime** instalado no computador onde vai rodar.
+
 ## Segurança
 
 - `credentials.json`, `appsettings.json` e `token_store/` contêm segredos e **estão no `.gitignore`**. Nunca os
