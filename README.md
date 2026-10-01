@@ -1,3 +1,5 @@
+<img src="CotacaoPedidos.Apresentacao/Recursos/icone.svg" alt="Logo do Cotação de Pedidos" width="96" align="right">
+
 # Cotação de Pedidos
 
 Aplicativo Windows (Windows Forms, .NET 10) que integra o ERP **ETrade** (SQL Server) ao **Google Sheets**
@@ -84,6 +86,7 @@ $destino = Join-Path ([Environment]::GetFolderPath('Desktop')) "Cotação de Ped
 $atalho = (New-Object -ComObject WScript.Shell).CreateShortcut($destino)
 $atalho.TargetPath = $exe
 $atalho.WorkingDirectory = Split-Path $exe
+$atalho.IconLocation = "$exe,0"   # ícone do programa (o logo)
 $atalho.Save()
 ```
 
@@ -110,3 +113,4 @@ Ou pelo Explorer: abra a pasta `%LOCALAPPDATA%\CotacaoPedidos`, clique com o bot
 - O projeto foi escrito para o esquema do ETrade (tabelas `Movimento`, `Movimento_Produto`, `Produto`, `Filial`,
   `Operacao`) e para o fluxo de Operações 70 → 72 descrito acima. Para outro ERP, só a camada de Dados precisa mudar.
 - A versão e a data da compilação aparecem no rodapé da tela (`Version` em `CotacaoPedidos.Apresentacao.csproj`).
+  O histórico de versões está no [CHANGELOG.md](CHANGELOG.md).

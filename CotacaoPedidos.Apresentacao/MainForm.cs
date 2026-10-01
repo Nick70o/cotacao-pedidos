@@ -45,6 +45,7 @@ public sealed class MainForm : Form
     public MainForm()
     {
         Text = "Cotação de Pedidos";
+        Icon = IconeAplicacao.Obter();
         StartPosition = FormStartPosition.CenterScreen;
         MinimumSize = new Size(720, 600);
         Size = new Size(860, 680);

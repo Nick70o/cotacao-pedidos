@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Cotação de Pedidos">
+  <rect width="256" height="256" rx="58" fill="#0B3F4A"/>
+  <path d="M154.8 80.4 A64 64 0 1 0 154.8 175.6" fill="none" stroke="#F4FAFA" stroke-width="26" stroke-linecap="round"/>
+  <rect x="160" y="104" width="58" height="48" rx="12" fill="#FFAE42"/>
+  <path d="M176 129 L185 138 L202 119" fill="none" stroke="#0B3F4A" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

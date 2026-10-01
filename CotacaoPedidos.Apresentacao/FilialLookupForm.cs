@@ -17,6 +17,7 @@ internal sealed class FilialLookupForm : Form
         _filiais = filiais;
 
         Text = "Pesquisar filial";
+        Icon = IconeAplicacao.Obter();
         StartPosition = FormStartPosition.CenterParent;
         Size = new Size(620, 400);
         MinimumSize = new Size(420, 260);
