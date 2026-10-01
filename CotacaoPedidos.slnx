@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/1 - Apresentação/">
+    <Project Path="CotacaoPedidos.Apresentacao/CotacaoPedidos.Apresentacao.csproj" />
+  </Folder>
+  <Folder Name="/2 - Negócio/">
+    <Project Path="CotacaoPedidos.Negocio/CotacaoPedidos.Negocio.csproj" />
+  </Folder>
+  <Folder Name="/3 - Dados/">
+    <Project Path="CotacaoPedidos.Dados/CotacaoPedidos.Dados.csproj" />
+  </Folder>
+</Solution>

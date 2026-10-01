@@ -1,0 +1,52 @@
+# ==================================================================
+# Segredos e configuração local - NUNCA commitar
+# (os modelos *.example.json são versionados; os arquivos reais não)
+# ==================================================================
+credentials.json
+credentials.*.json
+!credentials.example.json
+appsettings.json
+appsettings.*.json
+!appsettings.example.json
+token_store/
+client_secret*.json
+.env
+.env.*
+*.pfx
+*.p12
+*.snk
+
+# Bancos de dados e dumps
+*.mdf
+*.ldf
+*.ndf
+*.bak
+*.bacpac
+
+# Build
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+out/
+publish/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+
+# Claude Code (configuração local da ferramenta)
+.claude/
+
+# Logs
+*.log
+
+# Sistema operacional
+Thumbs.db
+.DS_Store

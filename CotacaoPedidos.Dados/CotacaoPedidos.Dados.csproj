@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!--
+		Camada de DADOS: acesso ao banco ETrade (SQL Server) e à planilha (Google Sheets/Drive).
+		Implementa as interfaces definidas na camada de Negócio; não decide regra de negócio.
+	-->
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<RootNamespace>CotacaoPedidos.Dados</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Google.Apis.Auth" Version="1.77.0" />
+		<PackageReference Include="Google.Apis.Drive.v3" Version="1.76.0.4273" />
+		<PackageReference Include="Google.Apis.Sheets.v4" Version="1.75.0.4178" />
+		<PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\CotacaoPedidos.Negocio\CotacaoPedidos.Negocio.csproj" />
+	</ItemGroup>
+
+</Project>

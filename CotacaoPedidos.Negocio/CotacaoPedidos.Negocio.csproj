@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!--
+		Camada de NEGÓCIO: entidades, regras da especificação e o serviço que orquestra os fluxos.
+		Não conhece SQL Server nem Google: fala com a camada de Dados só pelas interfaces em Contratos.cs.
+		Por isso não tem nenhum pacote externo.
+	-->
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<RootNamespace>CotacaoPedidos.Negocio</RootNamespace>
+	</PropertyGroup>
+
+</Project>

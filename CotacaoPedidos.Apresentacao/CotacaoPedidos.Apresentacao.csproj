@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!--
+		Camada de APRESENTAÇÃO: telas (Windows Forms). Usa a camada de Negócio para tudo; a camada de Dados
+		só é referenciada para montar a aplicação na inicialização (Aplicacao.cs).
+	-->
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net10.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UseWindowsForms>true</UseWindowsForms>
+		<RootNamespace>CotacaoPedidos.Apresentacao</RootNamespace>
+		<AssemblyName>CotacaoPedidos.Apresentacao</AssemblyName>
+
+		<!-- Versão exibida no rodapé da tela. Aumente a cada entrega. -->
+		<Version>1.0.0</Version>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- Data/hora da compilação, gravada no executável e exibida no rodapé (InformacaoBuild.cs). -->
+		<AssemblyMetadata Include="DataCompilacao" Value="$([System.DateTime]::Now.ToString('yyyy-MM-dd HH:mm'))" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\CotacaoPedidos.Negocio\CotacaoPedidos.Negocio.csproj" />
+		<ProjectReference Include="..\CotacaoPedidos.Dados\CotacaoPedidos.Dados.csproj" />
+	</ItemGroup>
+
+	<!--
+		Arquivos de configuração locais (NÃO vão para o Git - veja .gitignore). Se não existirem, o projeto
+		ainda compila; o programa avisa o que falta ao abrir. Modelos: *.example.json.
+	-->
+	<ItemGroup>
+		<None Include="credentials.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('credentials.json')" />
+		<None Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('appsettings.json')" />
+	</ItemGroup>
+
+</Project>
