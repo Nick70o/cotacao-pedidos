@@ -3,6 +3,20 @@
 Todas as mudanças relevantes do projeto. A versão atual aparece no rodapé do programa e é definida em
 `Version`, em `CotacaoPedidos.Apresentacao/CotacaoPedidos.Apresentacao.csproj`.
 
+## [1.1.1] - 2026-10-02
+
+### Adicionado
+- **Excluir planilha** na aba Histórico (botão ou tecla Delete, sempre com confirmação). A planilha vai para a
+  lixeira do Google Drive, de onde pode ser restaurada por 30 dias. Antes de excluir, o programa relê a planilha e,
+  se for a ativa, consulta o pedido no ETrade. A planilha ativa é arquivada antes: o link do fornecedor para na
+  hora e, se for restaurada, ela volta como arquivada. Cotações importadas (ou com o pedido já na Operação 72)
+  não podem ser excluídas.
+
+### Alterado
+- **Ícone de ajuda "?" mais discreto**: em vez da bola azul preenchida, só o contorno em cinza; ao passar o
+  mouse ele fica preenchido com a cor do logo. Também ficou um pouco menor e o "?" é desenhado sem as franjas
+  coloridas do ClearType. Em alto contraste do Windows, usa as cores do sistema.
+
 ## [1.1.0] - 2026-10-01
 
 ### Adicionado

@@ -81,4 +81,10 @@ public sealed record RegistroHistorico(
     DateTime? AlteradaEm)
 {
     public string Link => LinkPlanilha.Obter(SpreadsheetId);
+
+    /// <summary>
+    /// Cotação importada não pode ser excluída: a planilha é o registro dos preços gravados no ETrade e a trava
+    /// contra importação em dobro (seção 19.2).
+    /// </summary>
+    public bool PodeExcluir => !string.Equals(Status, NomesStatus.CotacaoImportada, StringComparison.Ordinal);
 }

@@ -13,7 +13,8 @@ para cotar Pedidos de Compra com fornecedores:
    transação** (qualquer falha desfaz tudo).
 4. **Sobrescrever** arquiva a planilha atual (pasta *Registros Arquivados*) e gera uma nova, quando o pedido mudou
    no ETrade depois da exportação.
-5. A aba **Histórico** lista todas as planilhas, ativas e arquivadas.
+5. A aba **Histórico** lista todas as planilhas, ativas e arquivadas, e permite **excluir** as que não servem mais:
+   elas vão para a lixeira do Google Drive (restauráveis por 30 dias). Cotações já importadas não podem ser excluídas.
 
 Cada opção da tela tem um ícone **?** que explica o que ela faz.
 

@@ -73,4 +73,11 @@ internal static class TextosAjuda
 
     public const string CopiarLinkHistorico =
         "Copia o link da planilha selecionada.";
+
+    public const string ExcluirPlanilhaHistorico =
+        "Envia a planilha selecionada para a lixeira do Google Drive, onde ela pode ser restaurada em até 30 dias " +
+        "(a tecla Delete faz o mesmo). Sempre pede confirmação.\n\n" +
+        "Se for a planilha ativa de um pedido, o link do fornecedor para de funcionar e o pedido volta para " +
+        "Cotação Pendente. Se ela for restaurada depois, volta como arquivada.\n\n" +
+        "Cotações já importadas não podem ser excluídas: a planilha é o registro dos preços gravados no ETrade.";
 }

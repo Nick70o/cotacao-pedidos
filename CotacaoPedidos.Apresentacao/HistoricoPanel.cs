@@ -1,16 +1,18 @@
-﻿using CotacaoPedidos.Negocio;
+﻿using System.Text;
+using CotacaoPedidos.Negocio;
 
 namespace CotacaoPedidos.Apresentacao;
 
 /// <summary>
 /// Aba Histórico: todas as planilhas de cotação no Drive (ativas e arquivadas por Sobrescrever),
-/// com filtro por Filial/Sequência. A fonte é o próprio Drive - não há registro paralelo (seção 18).
+/// com filtro por Filial/Sequência e exclusão. A fonte é o próprio Drive - não há registro paralelo (seção 18).
 /// </summary>
 internal sealed class HistoricoPanel : UserControl
 {
     private const string FormatoDataHora = "dd/MM/yyyy HH:mm";
 
     private readonly Func<Task<IReadOnlyList<RegistroHistorico>>> _carregar;
+    private readonly Func<string, Task<RegistroHistorico>> _excluir;
     private readonly Action<string> _log;
 
     private readonly CampoNumerico _txtFilial = new(maximoDigitos: 5) { Width = 70, Anchor = AnchorStyles.Left };
@@ -22,16 +24,26 @@ internal sealed class HistoricoPanel : UserControl
     private readonly Button _btnAtualizar = new() { Text = "Atualizar", AutoSize = true };
     private readonly Button _btnAbrir = new() { Text = "Abrir planilha", AutoSize = true, Enabled = false };
     private readonly Button _btnCopiar = new() { Text = "Copiar link", AutoSize = true, Enabled = false };
+    private readonly Button _btnExcluir = new()
+    {
+        Text = "Excluir planilha", AutoSize = true, Enabled = false, Margin = new Padding(16, 3, 3, 3)
+    };
     private readonly Label _lblResumo = new() { AutoSize = true, Anchor = AnchorStyles.Left };
     private readonly DataGridView _grade;
 
     private IReadOnlyList<RegistroHistorico> _registros = [];
     private bool _carregado;
-    private bool _carregando;
 
-    public HistoricoPanel(Func<Task<IReadOnlyList<RegistroHistorico>>> carregar, Action<string> log)
+    /// <summary>Carregando a lista ou excluindo: uma coisa por vez.</summary>
+    private bool _ocupado;
+
+    public HistoricoPanel(
+        Func<Task<IReadOnlyList<RegistroHistorico>>> carregar,
+        Func<string, Task<RegistroHistorico>> excluir,
+        Action<string> log)
     {
         _carregar = carregar;
+        _excluir = excluir;
         _log = log;
 
         _grade = new DataGridView
@@ -57,6 +69,13 @@ internal sealed class HistoricoPanel : UserControl
 
         _grade.SelectionChanged += (_, _) => AtualizarBotoes();
         _grade.CellDoubleClick += (_, e) => { if (e.RowIndex >= 0) AbrirSelecionada(); };
+        _grade.KeyDown += async (_, e) =>
+        {
+            if (e.KeyCode != Keys.Delete)
+                return;
+            e.Handled = true;
+            await ExcluirSelecionadaAsync();
+        };
 
         _txtFilial.TextChanged += (_, _) => Filtrar();
         _txtSequencia.TextChanged += (_, _) => Filtrar();
@@ -64,6 +83,7 @@ internal sealed class HistoricoPanel : UserControl
         _btnAtualizar.Click += async (_, _) => await AtualizarAsync();
         _btnAbrir.Click += (_, _) => AbrirSelecionada();
         _btnCopiar.Click += (_, _) => CopiarLinkSelecionada();
+        _btnExcluir.Click += async (_, _) => await ExcluirSelecionadaAsync();
 
         _chkArquivadas.Margin = new Padding(12, 3, 0, 3);
 
@@ -83,6 +103,7 @@ internal sealed class HistoricoPanel : UserControl
         [
             _btnAbrir.ComAjuda("Abrir planilha", TextosAjuda.AbrirPlanilhaHistorico),
             _btnCopiar.ComAjuda("Copiar link", TextosAjuda.CopiarLinkHistorico),
+            _btnExcluir.ComAjuda("Excluir planilha", TextosAjuda.ExcluirPlanilhaHistorico),
             _lblResumo
         ]);
 
@@ -120,15 +141,12 @@ internal sealed class HistoricoPanel : UserControl
 
     private async Task AtualizarAsync()
     {
-        if (_carregando)
+        if (_ocupado)
             return;
 
         try
         {
-            _carregando = true;
-            _btnAtualizar.Enabled = false;
-            UseWaitCursor = true;
-
+            DefinirOcupado(true);
             _registros = await _carregar();
             _carregado = true;
             Filtrar();
@@ -141,10 +159,16 @@ internal sealed class HistoricoPanel : UserControl
         }
         finally
         {
-            _carregando = false;
-            _btnAtualizar.Enabled = true;
-            UseWaitCursor = false;
+            DefinirOcupado(false);
         }
+    }
+
+    private void DefinirOcupado(bool ocupado)
+    {
+        _ocupado = ocupado;
+        _btnAtualizar.Enabled = !ocupado;
+        UseWaitCursor = ocupado;
+        AtualizarBotoes();
     }
 
     private void Filtrar()
@@ -189,9 +213,10 @@ internal sealed class HistoricoPanel : UserControl
 
     private void AtualizarBotoes()
     {
-        var temSelecao = Selecionada is not null;
-        _btnAbrir.Enabled = temSelecao;
-        _btnCopiar.Enabled = temSelecao;
+        var selecionada = Selecionada;
+        _btnAbrir.Enabled = selecionada is not null;
+        _btnCopiar.Enabled = selecionada is not null;
+        _btnExcluir.Enabled = !_ocupado && selecionada is { PodeExcluir: true };
     }
 
     private void AbrirSelecionada()
@@ -223,5 +248,60 @@ internal sealed class HistoricoPanel : UserControl
         {
             _log($"Não foi possível copiar o link: {ex.Message}");
         }
+    }
+
+    private async Task ExcluirSelecionadaAsync()
+    {
+        if (_ocupado || Selecionada is not { PodeExcluir: true } registro || !ConfirmarExclusao(registro))
+            return;
+
+        try
+        {
+            DefinirOcupado(true);
+            var excluida = await _excluir(registro.SpreadsheetId);
+            _log($"Planilha enviada para a lixeira do Google Drive: {excluida.Nome}");
+        }
+        catch (OperacaoBloqueadaException ex)
+        {
+            _log($"[BLOQUEADO] {ex.Message}");
+            MessageBox.Show(this, ex.Message, "Exclusão bloqueada", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+        catch (Exception ex)
+        {
+            _log($"[ERRO] Não foi possível excluir a planilha: {ex.Message}");
+            MessageBox.Show(this, $"Não foi possível excluir a planilha:\n\n{ex.Message}", "Excluir planilha",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        finally
+        {
+            DefinirOcupado(false);
+        }
+
+        // Recarrega também depois de um bloqueio: ele indica que a lista estava desatualizada.
+        await AtualizarAsync();
+    }
+
+    private bool ConfirmarExclusao(RegistroHistorico registro)
+    {
+        var texto = new StringBuilder().AppendLine(registro.Nome).AppendLine();
+
+        if (registro.Arquivada)
+        {
+            texto.AppendLine("É uma planilha arquivada, guardada só para consulta.");
+        }
+        else
+        {
+            texto.AppendLine("É a planilha ATIVA do pedido: o link enviado ao fornecedor deixa de funcionar e o " +
+                             "pedido fica sem planilha (Cotação Pendente). Para cotar de novo, use Exportar.");
+            if (registro.Status == NomesStatus.CotacaoRealizada)
+                texto.AppendLine("O fornecedor já preencheu preços nesta planilha; eles não serão importados.");
+        }
+
+        texto.AppendLine()
+            .Append("A planilha vai para a lixeira do Google Drive, onde pode ser restaurada em até 30 dias. " +
+                    "Deseja excluir?");
+
+        return Dialogos.Confirmar(this, "Excluir esta planilha?", texto.ToString(),
+            "Sim — Excluir", "Não — Manter", TaskDialogIcon.Warning);
     }
 }

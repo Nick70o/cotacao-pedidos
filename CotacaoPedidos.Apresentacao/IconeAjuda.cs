@@ -5,10 +5,14 @@ namespace CotacaoPedidos.Apresentacao;
 /// <summary>
 /// Ícone "?" ao lado de uma opção da tela. Passar o mouse mostra a explicação; clicar abre a explicação
 /// numa janela. Funciona mesmo quando a opção ao lado está desabilitada (botão desabilitado não mostra dica).
+/// Discreto em repouso (só o contorno, em cinza) e destacado com a cor do logo ao passar o mouse.
 /// </summary>
 internal sealed class IconeAjuda : Control
 {
-    private static readonly Font FonteInterrogacao = new("Segoe UI", 8.25f, FontStyle.Bold);
+    private static readonly FontFamily FamiliaInterrogacao = new("Segoe UI");
+    private const float TamanhoInterrogacaoPx = 11f;
+    private static readonly Color CorRepouso = Color.FromArgb(0x8A, 0x8A, 0x8A);
+    private static readonly Color CorDestaque = Color.FromArgb(0x0B, 0x3F, 0x4A); // fundo do logo (icone.svg)
 
     private readonly string _titulo;
     private readonly string _texto;
@@ -23,7 +27,7 @@ internal sealed class IconeAjuda : Control
         SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer |
                  ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
         BackColor = Color.Transparent;
-        Size = new Size(18, 18);
+        Size = new Size(15, 15);
         Margin = new Padding(3, 0, 0, 0);
         Anchor = AnchorStyles.Left;
         Cursor = Cursors.Help;
@@ -69,12 +73,41 @@ internal sealed class IconeAjuda : Control
         base.OnPaint(e);
         e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-        var circulo = new Rectangle(0, 0, Width - 1, Height - 1);
-        using (var fundo = new SolidBrush(_mouseSobre ? SystemColors.HotTrack : SystemColors.Highlight))
-            e.Graphics.FillEllipse(fundo, circulo);
+        // Em alto contraste do Windows, usa as cores do sistema em vez das fixas.
+        var altoContraste = SystemInformation.HighContrast;
+        var corRepouso = altoContraste ? SystemColors.ControlText : CorRepouso;
+        var corDestaque = altoContraste ? SystemColors.Highlight : CorDestaque;
 
-        TextRenderer.DrawText(e.Graphics, "?", FonteInterrogacao, circulo, SystemColors.HighlightText,
-            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+        // Meio pixel para dentro: o traço de 1 px cai inteiro sobre os pixels da borda.
+        var circulo = new RectangleF(0.5f, 0.5f, Width - 2, Height - 2);
+        Color corTexto;
+        if (_mouseSobre)
+        {
+            using var fundo = new SolidBrush(corDestaque);
+            e.Graphics.FillEllipse(fundo, circulo);
+            corTexto = altoContraste ? SystemColors.HighlightText : Color.White;
+        }
+        else
+        {
+            using var contorno = new Pen(corRepouso, 1f);
+            e.Graphics.DrawEllipse(contorno, circulo);
+            corTexto = corRepouso;
+        }
+
+        // O "?" é desenhado como forma (não como texto) para ficar centralizado pelo desenho da letra e sem
+        // as franjas coloridas do ClearType.
+        using var interrogacao = new GraphicsPath();
+        interrogacao.AddString("?", FamiliaInterrogacao, (int)FontStyle.Bold, TamanhoInterrogacaoPx, PointF.Empty,
+            StringFormat.GenericTypographic);
+        var limites = interrogacao.GetBounds();
+        using (var centralizar = new Matrix())
+        {
+            centralizar.Translate(circulo.X + (circulo.Width - limites.Width) / 2 - limites.X,
+                                  circulo.Y + (circulo.Height - limites.Height) / 2 - limites.Y);
+            interrogacao.Transform(centralizar);
+        }
+        using var pincel = new SolidBrush(corTexto);
+        e.Graphics.FillPath(pincel, interrogacao);
     }
 
     protected override void Dispose(bool disposing)

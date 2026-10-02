@@ -15,7 +15,7 @@
 		<AssemblyName>CotacaoPedidos.Apresentacao</AssemblyName>
 
 		<!-- Versão exibida no rodapé da tela. Aumente a cada entrega (e registre no CHANGELOG.md). -->
-		<Version>1.1.0</Version>
+		<Version>1.1.1</Version>
 
 		<!-- Ícone do executável (e do atalho). O da janela é o mesmo arquivo, embutido abaixo. -->
 		<ApplicationIcon>Recursos\icone.ico</ApplicationIcon>

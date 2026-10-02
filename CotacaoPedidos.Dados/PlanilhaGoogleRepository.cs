@@ -497,23 +497,72 @@ public sealed partial class PlanilhaGoogleRepository : IPlanilhaRepository, IDis
     /// Renomeia a planilha como histórico, move para "Registros Arquivados" e revoga o link público:
     /// ela deixa de ser a planilha ativa do pedido.
     /// </summary>
-    public async Task ArquivarAsync(PlanilhaVinculada planilha, CancellationToken ct = default)
+    public Task ArquivarAsync(PlanilhaVinculada planilha, CancellationToken ct = default) =>
+        ArquivarAsync(planilha.SpreadsheetId, planilha.Nome, ct);
+
+    private async Task ArquivarAsync(string spreadsheetId, string nomeAtual, CancellationToken ct)
     {
         var carimbo = DateTime.Now.ToString("yyyy-MM-dd HHmm", CultureInfo.InvariantCulture);
-        var nomeHistorico = $"[Arquivado {carimbo}] {planilha.Nome}";
+        var nomeHistorico = $"[Arquivado {carimbo}] {nomeAtual}";
 
-        await RenomearAsync(planilha.SpreadsheetId, nomeHistorico, ct);
+        await RenomearAsync(spreadsheetId, nomeHistorico, ct);
         await MoverParaPastaAsync(
-            planilha.SpreadsheetId, destinoId: _pastaArquivadosId, origemId: _pastaRaizId, metadados: null, ct);
+            spreadsheetId, destinoId: _pastaArquivadosId, origemId: _pastaRaizId, metadados: null, ct);
 
         // A planilha arquivada é só para consulta/histórico (seção 19.1, item 4): ninguém de fora
         // deve conseguir abri-la ou editá-la mais.
-        await RevogarPermissaoPublicaAsync(planilha.SpreadsheetId, ct);
+        await RevogarPermissaoPublicaAsync(spreadsheetId, ct);
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Excluir (aba Histórico) - a regra de quando pode excluir fica na camada de Negócio
+    // ---------------------------------------------------------------------------------------------
+
+    /// <summary>
+    /// A planilha como está agora no Drive. Null se ela não existir mais, estiver na lixeira ou tiver saído das
+    /// pastas da aplicação (nesses casos ela nem aparece no Histórico).
+    /// </summary>
+    public async Task<RegistroHistorico?> ObterRegistroAsync(string spreadsheetId, CancellationToken ct = default)
+    {
+        GoogleFile arquivo;
+        try
+        {
+            var obter = _drive.Files.Get(spreadsheetId);
+            obter.Fields = $"{CamposDoHistorico}, trashed";
+            arquivo = await obter.ExecuteAsync(ct);
+        }
+        catch (Google.GoogleApiException ex) when (ex.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        var nasPastasDaAplicacao = arquivo.Parents?.Any(p => p == _pastaRaizId || p == _pastaArquivadosId) == true;
+        return arquivo.Trashed != true && nasPastasDaAplicacao ? ParaRegistroHistorico(arquivo) : null;
+    }
+
+    /// <summary>
+    /// Tira a planilha de uso e a envia para a lixeira do Drive, de onde pode ser restaurada por 30 dias.
+    /// A ativa é arquivada antes: o link do fornecedor para de funcionar na hora e, se alguém restaurar a
+    /// planilha, ela volta como arquivada, sem disputar com uma nova planilha ativa do mesmo pedido.
+    /// </summary>
+    public async Task EnviarParaLixeiraAsync(RegistroHistorico planilha, CancellationToken ct = default)
+    {
+        if (planilha.Arquivada)
+            await RevogarPermissaoPublicaAsync(planilha.SpreadsheetId, ct);
+        else
+            await ArquivarAsync(planilha.SpreadsheetId, planilha.Nome, ct);
+
+        var paraLixeira = _drive.Files.Update(new GoogleFile { Trashed = true }, planilha.SpreadsheetId);
+        paraLixeira.Fields = "id";
+        await paraLixeira.ExecuteAsync(ct);
     }
 
     // ---------------------------------------------------------------------------------------------
     // Histórico: planilhas ativas e arquivadas
     // ---------------------------------------------------------------------------------------------
+
+    /// <summary>Campos do arquivo usados para montar um <see cref="RegistroHistorico"/>.</summary>
+    private const string CamposDoHistorico = "id, name, parents, createdTime, modifiedTime, appProperties";
 
     public async Task<IReadOnlyList<RegistroHistorico>> ListarHistoricoAsync(CancellationToken ct = default)
     {
@@ -525,7 +574,7 @@ public sealed partial class PlanilhaGoogleRepository : IPlanilhaRepository, IDis
             var listar = _drive.Files.List();
             listar.Q = $"('{_pastaRaizId}' in parents or '{_pastaArquivadosId}' in parents) " +
                        $"and mimeType = '{LayoutPlanilha.MimeTypePlanilha}' and trashed = false";
-            listar.Fields = "nextPageToken, files(id, name, parents, createdTime, modifiedTime, appProperties)";
+            listar.Fields = $"nextPageToken, files({CamposDoHistorico})";
             listar.Spaces = "drive";
             listar.OrderBy = "createdTime desc";
             listar.PageSize = 1000;

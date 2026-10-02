@@ -2,7 +2,7 @@ namespace CotacaoPedidos.Negocio;
 
 /// <summary>
 /// Fluxos da tela de cotação: localizar/exportar o pedido para a planilha, sobrescrever e importar os preços
-/// de volta para o ETrade. Toda ação começa consultando de novo o banco e a planilha: o que está na tela pode
+/// de volta para o ETrade; e excluir planilhas pela aba Histórico. Toda ação começa consultando de novo o banco e a planilha: o que está na tela pode
 /// estar desatualizado (o pedido pode ter mudado no ETrade, o fornecedor pode ter mexido na planilha).
 /// </summary>
 public sealed class CotacaoService
@@ -225,6 +225,41 @@ public sealed class CotacaoService
                     "Clique em Localizar pedido para concluir essa etapa."
             };
         }
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Excluir (aba Histórico)
+    // ---------------------------------------------------------------------------------------------
+
+    /// <summary>
+    /// Envia a planilha para a lixeira do Google Drive. Relê a planilha e, se ela for a ativa, consulta o pedido
+    /// no ETrade antes: a lista do Histórico pode estar desatualizada. Devolve a planilha como estava.
+    /// </summary>
+    public async Task<RegistroHistorico> ExcluirPlanilhaAsync(string spreadsheetId, CancellationToken ct = default)
+    {
+        var planilha = await _planilhas.ObterRegistroAsync(spreadsheetId, ct)
+            ?? throw new OperacaoBloqueadaException(
+                "A planilha não está mais na pasta da aplicação (pode já ter sido excluída). Clique em Atualizar.");
+
+        if (!planilha.PodeExcluir)
+            throw new OperacaoBloqueadaException(
+                "Esta cotação já foi importada para o ETrade e não pode ser excluída: a planilha é o registro " +
+                "dos preços gravados e impede que a cotação seja importada de novo.");
+
+        // Pedido na Operação 72 com a planilha ainda não marcada: a importação foi gravada, mas a marcação pós-COMMIT
+        // não terminou (seção 17). Excluir agora apagaria o registro dessa importação.
+        if (!planilha.Arquivada && planilha is { Filial: { } filial, Sequencia: { } sequencia })
+        {
+            var pedido = await _etrade.LocalizarPedidoAsync(filial, sequencia, ct);
+            if (pedido is { EstaNaOperacao72: true, Desefetivado: false })
+                throw new OperacaoBloqueadaException(
+                    $"O pedido {sequencia} da filial {filial} já está na Operação 72 no ETrade, então esta cotação " +
+                    "já foi importada e não pode ser excluída. Localize o pedido na aba Cotação para atualizar " +
+                    "a planilha.");
+        }
+
+        await _planilhas.EnviarParaLixeiraAsync(planilha, ct);
+        return planilha;
     }
 
     // ---------------------------------------------------------------------------------------------

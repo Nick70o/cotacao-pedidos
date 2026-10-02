@@ -47,4 +47,16 @@ public interface IPlanilhaRepository
 
     /// <summary>Todas as planilhas, ativas e arquivadas, mais recentes primeiro.</summary>
     Task<IReadOnlyList<RegistroHistorico>> ListarHistoricoAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// A planilha como está agora no Drive; null se não existir mais, estiver na lixeira ou tiver saído das
+    /// pastas da aplicação.
+    /// </summary>
+    Task<RegistroHistorico?> ObterRegistroAsync(string spreadsheetId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Envia para a lixeira do Drive (restaurável por 30 dias). Antes revoga o link público e, se estiver ativa,
+    /// arquiva: restaurada, ela volta como arquivada e não disputa com a planilha ativa do pedido.
+    /// </summary>
+    Task EnviarParaLixeiraAsync(RegistroHistorico planilha, CancellationToken ct = default);
 }

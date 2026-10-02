@@ -148,7 +148,7 @@ public sealed class MainForm : Form
         layoutCotacao.Controls.Add(_txtLog, 0, 3);
 
         // ---- Abas ----
-        _historico = new HistoricoPanel(() => Cotacao.ListarHistoricoAsync(), Log) { Dock = DockStyle.Fill };
+        _historico = new HistoricoPanel(() => Cotacao.ListarHistoricoAsync(), ExcluirPlanilhaAsync, Log) { Dock = DockStyle.Fill };
 
         var abaCotacao = new TabPage("Cotação");
         abaCotacao.Controls.Add(layoutCotacao);
@@ -473,6 +473,33 @@ public sealed class MainForm : Form
         }
     }
 
+    /// <summary>Botão Excluir da aba Histórico (a confirmação e as mensagens ficam no HistoricoPanel).</summary>
+    private async Task<RegistroHistorico> ExcluirPlanilhaAsync(string spreadsheetId)
+    {
+        // Uma ação por vez: a planilha não pode sumir no meio de um Exportar/Importar da aba Cotação.
+        if (_ocupado)
+            throw new OperacaoBloqueadaException("Aguarde terminar a operação em andamento na aba Cotação.");
+
+        try
+        {
+            _ocupado = true;
+            AtualizarBotoes();
+            var excluida = await Cotacao.ExcluirPlanilhaAsync(spreadsheetId);
+
+            if (_situacao?.Planilha?.SpreadsheetId == spreadsheetId)
+            {
+                MostrarSituacao(null);
+                Log("A planilha exibida na aba Cotação foi excluída. Clique em \"Localizar pedido\" para ver a situação atual.");
+            }
+            return excluida;
+        }
+        finally
+        {
+            _ocupado = false;
+            AtualizarBotoes();
+        }
+    }
+
     // ---------------------------------------------------------------------------------------------
     // Helpers de UI
     // ---------------------------------------------------------------------------------------------
@@ -576,24 +603,8 @@ public sealed class MainForm : Form
         AtualizarBotoes();
     }
 
-    private bool Confirmar(string titulo, string texto, string textoSim, string textoNao, TaskDialogIcon icone)
-    {
-        var sim = new TaskDialogButton(textoSim);
-        var nao = new TaskDialogButton(textoNao);
-
-        var pagina = new TaskDialogPage
-        {
-            Caption = Text,
-            Heading = titulo,
-            Text = texto,
-            Icon = icone,
-            AllowCancel = true,
-            Buttons = { sim, nao },
-            DefaultButton = nao // Enter por engano não dispara a ação
-        };
-
-        return TaskDialog.ShowDialog(this, pagina) == sim;
-    }
+    private bool Confirmar(string titulo, string texto, string textoSim, string textoNao, TaskDialogIcon icone) =>
+        Dialogos.Confirmar(this, titulo, texto, textoSim, textoNao, icone);
 
     private static string Moeda(decimal valor) => valor.ToString("C", PtBr);
 
