@@ -68,6 +68,7 @@ internal sealed class HistoricoPanel : UserControl
         AdicionarColuna("Arquivo", typeof(string)).AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
 
         _grade.SelectionChanged += (_, _) => AtualizarBotoes();
+        _grade.MouseMove += (_, _) => DestravarCursorDaGrade();
         _grade.CellDoubleClick += (_, e) => { if (e.RowIndex >= 0) AbrirSelecionada(); };
         _grade.KeyDown += async (_, e) =>
         {
@@ -168,7 +169,19 @@ internal sealed class HistoricoPanel : UserControl
         _ocupado = ocupado;
         _btnAtualizar.Enabled = !ocupado;
         UseWaitCursor = ocupado;
+        DestravarCursorDaGrade();
         AtualizarBotoes();
+    }
+
+    /// <summary>
+    /// Defeito do DataGridView: se o mouse passa pela divisa de uma coluna (onde aparece o cursor de redimensionar)
+    /// enquanto o cursor de espera está ativo, a grade guarda o cursor de espera como se fosse o dela e o devolve
+    /// depois - ele fica girando sobre a grade mesmo com tudo carregado. Aqui ele volta ao normal.
+    /// </summary>
+    private void DestravarCursorDaGrade()
+    {
+        if (!_grade.UseWaitCursor && _grade.Cursor == Cursors.WaitCursor)
+            _grade.Cursor = Cursors.Default;
     }
 
     private void Filtrar()

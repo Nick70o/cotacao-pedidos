@@ -3,6 +3,16 @@
 Todas as mudanças relevantes do projeto. A versão atual aparece no rodapé do programa e é definida em
 `Version`, em `CotacaoPedidos.Apresentacao/CotacaoPedidos.Apresentacao.csproj`.
 
+## [1.1.2] - 2026-10-02
+
+### Corrigido
+- Aba Histórico: o cursor de carregamento ficava girando sobre a lista depois do Atualizar. Era um defeito do
+  DataGridView do Windows Forms: se o mouse passasse pela divisa de uma coluna durante a espera, a grade guardava
+  o cursor de espera como se fosse o dela. Agora ele volta ao normal ao terminar o carregamento.
+
+### Alterado
+- Rodapé: a build mostra só a data da compilação, sem a hora.
+
 ## [1.1.1] - 2026-10-02
 
 ### Adicionado

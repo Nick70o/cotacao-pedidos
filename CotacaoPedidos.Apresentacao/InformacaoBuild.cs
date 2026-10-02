@@ -15,7 +15,7 @@ internal static class InformacaoBuild
     /// <summary>Data e hora em que o programa foi compilado.</summary>
     public static DateTime? Compilacao { get; }
 
-    /// <summary>Texto do rodapé, por exemplo "Versão 1.0.0 · Build 01/10/2026 09:12".</summary>
+    /// <summary>Texto do rodapé, por exemplo "Versão 1.0.0 · Build 01/10/2026".</summary>
     public static string Texto { get; }
 
     /// <summary>Detalhes mostrados ao passar o mouse sobre o rodapé.</summary>
@@ -34,7 +34,7 @@ internal static class InformacaoBuild
         if (DateTime.TryParseExact(carimbo, "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var data))
             Compilacao = data;
 
-        var compilacaoTexto = Compilacao?.ToString("dd/MM/yyyy HH:mm", CultureInfo.GetCultureInfo("pt-BR"));
+        var compilacaoTexto = Compilacao?.ToString("dd/MM/yyyy", CultureInfo.GetCultureInfo("pt-BR"));
 
         Texto = compilacaoTexto is null
             ? $"Versão {Versao}"
